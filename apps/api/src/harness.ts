@@ -81,6 +81,8 @@ const EXTRACT_WORKER_PORT = process.env.EXTRACT_WORKER_PORT ?? "3004";
 const NUQ_WORKER_START_PORT = Number(
   process.env.NUQ_WORKER_START_PORT ?? "3006",
 );
+const NUQ_WORKER_COUNT = Number(process.env.NUQ_WORKER_COUNT ?? "5");
+const NUQ_PREFETCH_WORKER_PORT = NUQ_WORKER_START_PORT + NUQ_WORKER_COUNT;
 
 const logger = {
   section(message: string) {
@@ -425,7 +427,7 @@ async function startServices(command?: string[]): Promise<Services> {
     },
   );
 
-  const nuqWorkers = Array.from({ length: 5 }, (_, i) =>
+  const nuqWorkers = Array.from({ length: NUQ_WORKER_COUNT }, (_, i) =>
     execForward(
       `nuq-worker-${i}`,
       process.argv[2] === "--start-docker"
@@ -446,7 +448,7 @@ async function startServices(command?: string[]): Promise<Services> {
           ? "node --import ./dist/src/otel.js dist/src/services/worker/nuq-prefetch-worker.js"
           : "pnpm nuq-prefetch-worker:production",
         {
-          NUQ_PREFETCH_WORKER_PORT: String(3011),
+          NUQ_PREFETCH_WORKER_PORT: String(NUQ_PREFETCH_WORKER_PORT),
           NUQ_REDUCE_NOISE: "true",
           NUQ_POD_NAME: "nuq-prefetch-worker-0",
           NUQ_PREFETCH_REPLICAS: String(1),
